@@ -10,7 +10,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --blue:        #3B82F6;
+      --blue:       #3B82F6;
       --blue-hover: #60A5FA;
       --blue-light: #1a2744;
       --blue-mid:   #1e3060;
@@ -89,6 +89,8 @@
     .review-box.visible { display: block; }
     .review-box::before { content: '\201C'; position: absolute; top: -12px; left: 14px; font-size: 68px; font-weight: 800; color: rgba(59,130,246,0.2); line-height: 1; font-family: Georgia, serif; pointer-events: none; }
     #review-text { font-size: 15px; font-weight: 400; font-style: italic; color: var(--text); line-height: 1.78; position: relative; z-index: 1; }
+    .cursor { display: inline-block; width: 2px; height: 1.05em; background: var(--blue); margin-left: 1px; vertical-align: text-bottom; border-radius: 1px; animation: blink 0.85s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
     .branch-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(59,130,246,0.15); color: var(--blue-hover); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px; margin-top: 12px; }
     .action-row { display: none; gap: 10px; }
     .action-row.visible { display: flex; }
@@ -608,25 +610,30 @@
       return REVIEWS[idx];
     }
 
-    function generateReview() {
+    async function generateReview() {
       if (!selectedBranchName) { showToast('Please select a branch first'); return; }
       clearOutput();
       const text = pickReview();
       generatedText = text;
-      showReview(text);
+      await showReview(text);
       document.getElementById('btn-label').textContent = 'Regenerate Review';
     }
 
-    function showReview(text) {
+    async function showReview(text) {
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('branch-tag-text').textContent = selectedBranchName.replace('RJ Mobile – ', '');
-      
       const box    = document.getElementById('review-box');
       const textEl = document.getElementById('review-text');
-      
       box.classList.add('visible');
-      textEl.textContent = text; 
-      
+      textEl.innerHTML = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      textEl.appendChild(cursor);
+      for (let i = 0; i < text.length; i++) {
+        textEl.insertBefore(document.createTextNode(text[i]), cursor);
+        await wait(text[i] === '.' || text[i] === ',' ? 28 : 12);
+      }
+      cursor.remove();
       document.getElementById('action-row').classList.add('visible');
     }
 
@@ -677,6 +684,8 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
     }
+
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
   </script>
 </body>
 </html>
